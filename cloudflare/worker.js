@@ -1,6 +1,6 @@
-import { CUSTOM_OPTIONS,init_CUSTOM_OPTIONS } from "./src/OPTIONS"
-import { workerFetch } from './src/worker'
-import { rewriteBody } from "./src/rewriteBody.js"
+import { CUSTOM_OPTIONS, init_CUSTOM_OPTIONS } from "./src/OPTIONS";
+import { workerFetch } from './src/worker';
+import { rewriteBody } from "./src/rewriteBody.js";
 
 export default {
     /**
@@ -13,9 +13,16 @@ export default {
     async fetch(request, env, ctx) {
         init_CUSTOM_OPTIONS(env);
         const currentUrl = new URL(request.url);
+        
+        // Handle /robots.txt
+        if (currentUrl.pathname === '/robots.txt') {
+            return robots();
+        }
+        
         if (currentUrl.pathname === '/' || currentUrl.pathname.indexOf('/web/') === 0) {
             return home(currentUrl.pathname);
         }
+        
         return workerFetch(request, env, ctx);
     }
 }
@@ -25,7 +32,7 @@ export default {
  * @param {string} pathname
  * @returns
  */
-async function home(pathname){
+async function home(pathname) {
     let baseUrl;
     if (CUSTOM_OPTIONS.NIGHTLY) {
         baseUrl = 'https://raw.githubusercontent.com/Harry-zklcdc/go-proxy-bingai/nightly/';
@@ -62,3 +69,14 @@ async function home(pathname){
     newRes.headers.delete('content-security-policy');
     return newRes;
 };
+
+/**
+ * robots
+ * @returns {Response}
+ */
+function robots() {
+    const content = 'User-agent: *\nAllow: /';
+    return new Response(content, {
+        headers: { 'Content-Type': 'text/plain' }
+    });
+}
